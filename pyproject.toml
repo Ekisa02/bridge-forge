@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nebula-bridge"
+version = "0.1.0"
+description = "Web3 infrastructure toolkit: telemetry + ML classification"
+authors = [{name = "Nebula Team"}]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]

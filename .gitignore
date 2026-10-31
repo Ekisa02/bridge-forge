@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+venv/
+.env
+.env.*
+*.sqlite3
+*.log
+.DS_Store
+*.pth
+models/checkpoint.pt
+models/*.pt
+__pypackages__/
+*.egg-info/
+build/
+dist/
+.ipynb_checkpoints/
+.pytest_cache/
+coverage/
+.venv/
+
+# Docker
+node_modules/
+*.local
+
+# Editor
+.vscode/
+.idea/
+
+# pytest
+.pytest_cache/
