@@ -1,30 +1,17 @@
-__pycache__/
-*.py[cod]
-venv/
+bin/
+vendor/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
 .env
-.env.*
-*.sqlite3
-*.log
+coverage.out
 .DS_Store
-*.pth
-models/checkpoint.pt
-models/*.pt
-__pypackages__/
-*.egg-info/
-build/
-dist/
-.ipynb_checkpoints/
-.pytest_cache/
-coverage/
-.venv/
-
-# Docker
-node_modules/
-*.local
-
-# Editor
-.vscode/
+/node_modules/
+/dist/
 .idea/
-
-# pytest
-.pytest_cache/
+.vscode/
+*.log
+/*.db
+coverage/

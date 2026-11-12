@@ -1,106 +1,87 @@
 # Nebula Bridge
 
-Nebula Bridge is a modular Web3 infrastructure toolkit built with FastAPI and PyTorch. It provides components for node telemetry, transaction classification with a pluggable ML model, and adapter-style integrations for plugging different Web3 providers.
+Nebula Bridge is a modular Web3 infrastructure toolkit implemented in Go using the Gin web framework and GORM ORM. It provides a lightweight HTTP API for managing nodes and ingesting chain events (telemetry/relays), designed for easy extension to additional Web3 services.
 
 Key features
-- FastAPI-based REST API for telemetry, classification, and health checks
-- Lightweight PyTorch transaction classifier with save/load/predict utilities
-- Web3 provider adapter for Node metrics and health
-- Background telemetry polling and in-memory caching
-- Example training script to produce a demo model checkpoint
-- Tests using pytest and httpx
+- Clean layered architecture: HTTP handlers, services, repositories, models
+- GORM-backed storage with Postgres (recommended) and SQLite fallback for local dev/tests
+- Simple migration and CLI entry points
+- Unit tests for services and handlers
 
 Architecture
 
-ASCII diagram:
+- cmd/
+  - server: application entrypoint that wires config, DB, router and handlers
+  - migrate: small helper to run auto-migrations (optional)
+- internal/
+  - config: environment and config loader
+  - db: DB initialization (GORM)
+  - models: application data models (Node, Event)
+  - repository: repository interfaces and GORM implementations
+  - service: business logic and validations
+  - handlers: HTTP handlers using Gin
+- migrations/: SQL migration files (optional)
 
-  +----------------------+      +----------------------+      +----------------+
-  |   HTTP Clients       | ---> |   FastAPI App        | ---> | PyTorch Model  |
-  | (CLI / Grafana / UI) |      | (routers, services)  |      | (transaction    |
-  +----------------------+      +----------------------+      |  classifier)    |
-                                       |  ^   ^                +----------------+
-                                       |  |   |
-                             +---------+  |   +----------+
-                             |            |              |
-                    +--------v-----+ +----v-------+ +----v-------+
-                    | web3_client  | | cache/core | | background  |
-                    | (provider)   | | utils      | | tasks       |
-                    +--------------+ +------------+ +-------------+
+Request flow
 
+Client -> Gin HTTP handlers -> Service layer -> Repository (GORM) -> Database
 
 Installation
 
-Requirements: Python 3.9+ (3.10/3.11 recommended)
+Prerequisites
+- Go 1.20+
+- Docker & Docker Compose (optional for running Postgres)
 
-1. Clone
+Clone repository
 
-   git clone https://github.com/your-org/nebula-bridge.git
-   cd nebula-bridge
+  git clone https://github.com/yourorg/nebula-bridge.git
+  cd nebula-bridge
 
-2. Setup virtualenv
+Build
 
-   python -m venv .venv
-   source .venv/bin/activate
+  make build
 
-3. Install
+Run (development, SQLite fallback)
 
-   pip install -r requirements.txt
+  cp .env.example .env
+  # Edit .env to configure DATABASE_URL if you want Postgres
+  make run
 
-4. Run the app (development)
+Run with Docker Compose (Postgres)
 
-   # from repo root
-   uvicorn nebula_bridge.main:app --reload --port 8000
+  docker-compose up --build
+  # App will be available on PORT configured in .env (default 8080)
 
-5. Endpoints
+Environment variables
 
-   GET  /health                     -> service health
-   GET  /v1/telemetry/node          -> node telemetry (queries web3 provider when configured)
-   POST /v1/classify                -> classify transaction features (JSON payload)
+- PORT: HTTP server port (default: 8080)
+- DATABASE_URL: Postgres DSN (if empty, uses SQLite file: nebula.db)
+- LOG_LEVEL: log verbosity (info|debug)
 
-Example classify request
+Usage (HTTP endpoints)
 
-  POST /v1/classify
-  {
-    "features": [0.1, 0.3, 0.2, 0.4]
-  }
-
-Response:
-  {
-    "label": "benign",
-    "score": 0.87
-  }
-
-Model
-
-A small MLP model implementation lives in src/nebula_bridge/models/torch_model.py. You can create a demo checkpoint using:
-
-  python scripts/train_demo_model.py --out models/checkpoint.pt
-
-If no checkpoint is available the API will instantiate a fresh model with random weights (useful for development).
-
-Configuration
-
-Configuration follows environment variables (see src/nebula_bridge/config.py). Create a .env with keys such as:
-
-  WEB3_PROVIDER_URL=https://mainnet.infura.io/v3/YOURKEY
-  TELEMETRY_POLL_INTERVAL=60
+- GET /health - simple health check
+- POST /nodes - create a node
+  - payload: {"name":"node-1","address":"0x123..."}
+- GET /nodes - list nodes
+- POST /events - record an event
+  - payload: {"node_id":1,"type":"relay","payload":"{...}"}
+- GET /events - list events (supports ?node_id=)
 
 Testing
 
-  pip install -r requirements.txt
-  pytest -q
+  make test
 
 Docker
 
-A sample Dockerfile is provided. Build and run:
+- Dockerfile provided for building a container image
+- docker-compose.yml sets up Postgres and the app for local integration
 
-  docker build -t nebula-bridge:dev .
-  docker run -p 8000:8000 nebula-bridge:dev
+Development notes
+
+- Follow the layered architecture: add features in service layer and persist in repository implementations
+- Use in-memory SQLite for unit tests and small CI runs
 
 Contributing
 
-Contributions welcome. Structure follows a modular design inside src/nebula_bridge for easy extension. Please run tests and linters before opening PRs.
-
-License
-
-MIT
+Contributions welcome. Please open issues for feature requests or bug reports. For larger changes, open a pull request with tests and an explanation of your design choices.

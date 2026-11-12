@@ -1,10 +1,25 @@
 version: '3.8'
 services:
-  api:
-    build: .
-    ports:
-      - "8000:8000"
+  db:
+    image: postgres:15
     environment:
-      - WEB3_PROVIDER_URL=${WEB3_PROVIDER_URL}
+      POSTGRES_USER: nebula
+      POSTGRES_PASSWORD: nebula
+      POSTGRES_DB: nebula
+    ports:
+      - "5432:5432"
     volumes:
-      - ./:/app
+      - db-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=host=db user=nebula password=nebula dbname=nebula port=5432 sslmode=disable
+      - PORT=8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  db-data:
